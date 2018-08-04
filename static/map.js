@@ -134,7 +134,7 @@ function generatePath(startLocation, distance, radius) {
                 let temp = 0;
                 getDistance(currentLocation, startLocation, function(result) {
                     temp = result;
-                })
+
                 if (journey + temp > distMin) {
                     nextStopOptions = nextStopOptions.filter(function(loc) {
                         if (closerToStartThanNow(currentLocation, loc, startLocation)) {
@@ -142,6 +142,7 @@ function generatePath(startLocation, distance, radius) {
                         }
                     });
                 }
+              })
             })
         }
 
