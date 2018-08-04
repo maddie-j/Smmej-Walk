@@ -23,3 +23,7 @@ header {
     width: 900px;
     margin: auto;
 }
+
+#map{
+  height: 100%;
+}
