@@ -1,0 +1,25 @@
+/** Colour pallette
+blue: #6494AA;
+green: #90A959;
+yellow: #E9B872;
+red: #A63D40;
+black: #151515;
+
+*/
+
+
+body {
+    margin: 0;
+}
+
+header {
+    background : #90A959;
+    border-bottom: solid 1px black;
+    border-top: solid 1px #90A959;
+    font-family: Tahoma, Geneva, sans-serif;
+}
+
+.content {
+    width: 900px;
+    margin: auto;
+}
