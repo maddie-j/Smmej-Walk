@@ -12,12 +12,6 @@ function initMap() {
 
   infoWindow  = new google.maps.InfoWindow;
 
-  var request = {
-    location: homeLL,
-    radius: '300',
-    type: []
-  };
-
   var directionsService = new google.maps.DirectionsService();
   var directionsDisplay = new google.maps.DirectionsRenderer();
   directionsDisplay.setMap(map);
@@ -109,17 +103,65 @@ function generatePath(startLocation, distance, radius) {
   // Wandering between locations
   while (true) {
     let dist = 0;
-    let next_stop_options = [];
+    let nextStopOptions = [];
 
     // Generate next stops
-    while (next_stop_options.length < 2) {
-        dist += radius;
-        next_stop_options = pointsWithinMetres(dist, currentLocation);
+    while (nextStopOptions.length < 2) {
+      dist += radius;
+      nextStopOptions = pointsWithinMetres(dist, currentLocation).filter(function(loc) {
+        if (!visitedLocations.includes(loc)) {
+          return loc;
+        }
+      });
+      // Test the above:
+      // console.log(nextStopOptions);
+
+      // if past the halfway point, start heading back
+      if (journey + getDistance(currentLocation, startLocation) > distMin) {
+        nextStopOptions = nextStopOptions.filter(function(loc) {
+            if (closerToStartThanNow(currentLocation, loc, startLocation)) {
+              return loc;
+            }
+        });
+      }
+
     }
 
+    while (true) {
+      if (nextStopOptions.length > 0) {
+        // randomiser snippet from https://css-tricks.com/snippets/javascript/select-random-item-array/
+        let newLocation = nextStopOptions[Math.floor(Math.random() * nextStopOptions.length)];
+        let addedDist = getDistance(currentLocation, newLocation);
 
+        if (journey + addedDist > distMax) {
+          // Remove that location and try again
+          let index = nextStopOptions.indexOf(newLocation);
+          if (index > -1) {
+            array.splice(index, 1);
+          }
 
+        } else {
+          // Add the location and move on
+          journey += addedDist;
+          currentLocation = newLocation;
 
+          locationList.push(currentLocation);
+          visitedLocations.push(currentLocation);
+          break;
+
+        }
+
+      } else {
+        // Remove the current location so it goes back and tries again with the prev location
+        locationList.splice(-1, 1);
+        currentLocation = locationList[locationList.length - 1];
+      }
+
+      if (currentLocation == startLocation) {
+        return;
+      }
+
+    }
   }
 }
 
