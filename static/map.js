@@ -92,7 +92,6 @@ function getDistance(A,B){
     });
 }
 
-
 function generatePath(startLocation, distance, radius) {
   let currentLocation = startLocation;
 
@@ -124,4 +123,6 @@ function generatePath(startLocation, distance, radius) {
   }
 
 
+document.onLoad = function(){
+  var value = document.getElementById("totalDistance");
 }
