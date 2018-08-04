@@ -14,26 +14,39 @@ body {
 
 header {
     background : #f1f1f1;
-    border-bottom: solid 1px black;
-    border-top: solid 1px #90A959;
     font-family: Tahoma, Geneva, sans-serif;  
 	float: left;
 	color: black;
 	text-align: center;
-	padding: 12px;
+	padding: 10px;
 	text-decoration: none;
-	font-size: 18px;
-	line-height: 25px;
+	font-size: 14px;
+	/*line-height: 25px;*/
 	border-radius: 4px;
 	margin: auto;
 }
 
 form {
-	
+	background: #f1f1f1;
+	font-family: Tahoma, Geneva, sans-serif;
+
+    padding: 5px;
+    margin: auto;
+}
+
+#head {
+	border-bottom: solid 1px black;
+    border-top: solid 1px #90A959;
+}
+
+#logo {
+	display: block;
+	width: 30px;
+/*	padding: 4px;*/
 }
 
 
-#map{
+#map {
   height: 80%;
   width: 100%;
   padding: 4px;
