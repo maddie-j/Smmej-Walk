@@ -121,7 +121,7 @@ function generatePath(startLocation, distance, radius) {
 
 
   }
-
+}
 
 document.onLoad = function(){
   var value = document.getElementById("totalDistance");

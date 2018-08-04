@@ -47,8 +47,8 @@ form {
 
 
 #map {
-  height: 80%;
-  width: 100%;
+  height: calc(100% - 60px);
+  width: calc(100% - 8px);
   padding: 4px;
 }
 
