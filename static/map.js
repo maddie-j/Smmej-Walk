@@ -68,3 +68,9 @@ function getDistance(A,B){
       }
     });
 }
+
+
+document.onLoad = function(){
+  var value = document.getElementById("totalDistance");
+  
+}
