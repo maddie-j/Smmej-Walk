@@ -21,49 +21,39 @@ function initMap() {
 
     infoWindow = new google.maps.InfoWindow;
 
-    var directionsService = new google.maps.DirectionsService();
-    var directionsDisplay = new google.maps.DirectionsRenderer();
-    directionsDisplay.setMap(map);
 
-    // Try HTML5 geolocation.
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(function(position) {
-            var pos = {
-                lat: position.coords.latitude,
-                lng: position.coords.longitude
-            };
 
-            infoWindow.setPosition(pos);
-            infoWindow.setContent('You are currently here.');
-            infoWindow.open(map);
-            map.setCenter(pos);
-        }, function() {
-            handleLocationError(true, infoWindow, map.getCenter());
-        });
-    } else {
-        // Browser doesn't support Geolocation
-        handleLocationError(false, infoWindow, map.getCenter());
-    }
 
 }
 
 
-function closerToStartThanNow(current_location, new_position, start_position) {
+function closerToStartThanNow(currentLocation, newPosition, startPosition) {
 
-    service = new google.maps.places.PlacesService(map);
+    // dist start to current
+    let xa = Math.abs(startPosition.lat() - currentLocation.lat());
+    let ya = Math.abs(startPosition.lng() - currentLocation.lng());
+    let distA = (xa * xa) + (ya * ya);
 
+    // dist start to new
+    let xb = Math.abs(startPosition.lat() - newPosition.lat());
+    let yb = Math.abs(startPosition.lng() - newPosition.lng());
+    let distB = (xb * xb) + (yb * yb);
 
-    getDistance(start_position, new_position, function(distStartNew) {
-        getDistance(start_position, current_location, function(distStartCurrent) {
-            if (distStartNew < distStartCurrent) {
-                return true;
-            } else {
-                return false;
-            }
-        })
-    })
-
-
+    return distB < distA;
+    //
+    //
+    // service = new google.maps.places.PlacesService(map);
+    //
+    //
+    // getDistance(start_position, new_position, function(distStartNew) {
+    //     getDistance(start_position, current_location, function(distStartCurrent) {
+    //         if (distStartNew < distStartCurrent) {
+    //             return true;
+    //         } else {
+    //             return false;
+    //         }
+    //     })
+    // })
 }
 
 // Find the points of interest within 'dist' metres of current_location
@@ -79,7 +69,11 @@ function pointsWithinMetres(dist, current_location, callback) {
 
     service.nearbySearch(request, function(results, status) {
         if (status == google.maps.places.PlacesServiceStatus.OK) {
-            callback(results);
+            callback(results.filter(function(loc) {
+                if (!loc.types.includes('locality')) {
+                    return loc;
+                }
+            }).map(x => x.geometry.location));
         }
 
     })
@@ -87,6 +81,11 @@ function pointsWithinMetres(dist, current_location, callback) {
 
 // Distance Between two points A and B
 function getDistance(A, B, callback) {
+    console.log(A);
+    console.log(B);
+    if (B == null) {
+        debugger;
+    }
     var service = new google.maps.DistanceMatrixService();
     service.getDistanceMatrix({
         origins: [A, ],
@@ -99,90 +98,188 @@ function getDistance(A, B, callback) {
     });
 }
 
-function generatePath(startLocation, distance, radius) {
-    let currentLocation = startLocation;
 
-    let distMin = distance - (distance * 0.2);
-    let distMax = distance + (distance * 0.2);
+function generatePathBackup(startLocation, distance, radius) {
+    let stops = []
+    let numStops;
 
-    let journey = 0;
+
+}
+
+
+document.onload = function() {
+    var value = document.getElementById("distanceButton");
+
+    value.addEventListener("click", function(e) {
+        e.preventDefault();
+        // Try HTML5 geolocation.
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function(position) {
+                var pos = {
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude
+                };
+
+                infoWindow.setPosition(pos);
+                infoWindow.setContent('You are currently here.');
+                infoWindow.open(map);
+                map.setCenter(pos);
+
+                generatePath(position, value.val(), 100);
+
+            }, function() {
+                handleLocationError(true, infoWindow, map.getCenter());
+
+            });
+        } else {
+            // Browser doesn't support Geolocation
+            handleLocationError(false, infoWindow, map.getCenter());
+        }
+    });
+}
+
+function linkPositions() {
+
+    var directionsService = new google.maps.DirectionsService();
+    var directionsDisplay = new google.maps.DirectionsRenderer();
+    directionsDisplay.setMap(map);
+
+    directionsService.route({
+
+        origin: startLocation,
+        destination: startLocation,
+        waypoints: locationList.map(x => ({
+            "location": x,
+            "stopover": true
+        })),
+        optimizeWaypoints: false,
+        travelMode: 'WALKING',
+
+    }, function(response, status) {
+        if (status === 'OK') {
+            directionsDisplay.setDirections(response);
+
+
+        } else {
+
+        }
+    });
+
+}
+
+let locationList, visitedLocations, journey, distMin, distMax, currentLocation, startLocation, radius;
+
+function generatePath(start, distance, rad) {
+    startLocation = start;
+    currentLocation = startLocation;
+
+    let marker = new google.maps.Marker({
+        position: startLocation,
+        map: map,
+
+    });
+
+    radius = rad;
+
+    distMin = distance - (distance * 0.2);
+    distMax = distance + (distance * 0.2);
+
+    journey = 0;
 
     // location list outlines the locations on the final path
     // visited locations includes failed location attempts as well as successful ones
-    let locationList = [];
-    let visitedLocations = [];
+    locationList = [];
+    visitedLocations = [];
 
 
     // Wandering between locations
-    while (true) {
-        let dist = 0;
-        let nextStopOptions = [];
+    // while (true) {
+    let dist = 0;
+    let nextStopOptions = [];
 
-        // Generate next stops
-        while (nextStopOptions.length < 2) {
-            dist += radius;
-            pointsWithinMetres(dist, currentLocation, function(nextStopOptions) {
-                nextStopOptions = nextStopOptions.filter(function(loc) {
-                    if (!visitedLocations.includes(loc)){
-                        return loc;
-                    }
-                });
-                // Test the above:
-                // console.log(nextStopOptions);
+    // Generate next stops
+    dist += radius;
+    pointsWithinMetres(dist, currentLocation, selectNextDest);
 
-                // if past the halfway point, start heading back
-                let temp = 0;
-                getDistance(currentLocation, startLocation, function(result) {
-                    temp = result;
-
-                if (journey + temp > distMin) {
-                    nextStopOptions = nextStopOptions.filter(function(loc) {
-                        if (closerToStartThanNow(currentLocation, loc, startLocation)) {
-                            return loc;
-                        }
-                    });
-                }
-              })
-            })
-        }
-
-        while (true) {
-            if (nextStopOptions.length > 0) {
-                // randomiser snippet from https://css-tricks.com/snippets/javascript/select-random-item-array/
-                let newLocation = nextStopOptions[Math.floor(Math.random() * nextStopOptions.length)];
-                getDistance(currentLocation, newLocation, function(addedDist) {
-
-                    if (journey + addedDist > distMax) {
-                        // Remove that location and try again
-                        let index = nextStopOptions.indexOf(newLocation);
-                        if (index > -1) {
-                            array.splice(index, 1);
-                        }
-
-                    } else {
-                        // Add the location and move on
-                        journey += addedDist;
-                        currentLocation = newLocation;
-
-                        locationList.push(currentLocation);
-                        visitedLocations.push(currentLocation);
-                        break;
-                    }
-
-                })
-            } else {
-                // Remove the current location so it goes back and tries again with the prev location
-                locationList.splice(-1, 1);
-                currentLocation = locationList[locationList.length - 1];
-            }
-
-            if (currentLocation == startLocation) {
-                return;
-            }
-        }
-    }
+    // while (true) {}
+    // }
 }
 
-document.onLoad = function() {
-    var value = document.getElementById("totalDistance");
+selectNextDest = function(nextStopOptions) {
+    nextStopOptions = nextStopOptions.filter(function(loc) {
+        if (!visitedLocations.includes(loc)) {
+            return loc;
+        }
+    });
+    // Test the above:
+    // console.log(nextStopOptions);
+    let dist = 0;
+
+    if (journey + dist > distMin) {
+        nextStopOptions = nextStopOptions.filter(function(loc) {
+            if (closerToStartThanNow(currentLocation, loc, startLocation)) {
+                return loc;
+            }
+        });
+    }
+
+    if (nextStopOptions.length > 0) {
+        // randomiser snippet from https://css-tricks.com/snippets/javascript/select-random-item-array/
+        let newLocation = nextStopOptions[Math.floor(Math.random() * nextStopOptions.length)];
+        //if newLocation
+        getDistance(currentLocation, newLocation, function(addedDist) {
+
+            // if (journey + addedDist > distMax) {
+            //     // Remove that location and try again
+            //     let index = nextStopOptions.indexOf(newLocation);
+            //     if (index > -1) {
+            //         array.splice(index, 1);
+            //     }
+            //
+            // } else {
+            // Add the location and move on
+            journey += addedDist;
+            currentLocation = newLocation;
+
+            let marker = new google.maps.Marker({
+                position: currentLocation,
+                map: map,
+
+            });
+
+            locationList.push(currentLocation);
+            visitedLocations.push(currentLocation);
+
+
+            let xa = Math.abs(startLocation.lat() - currentLocation.lat());
+            let ya = Math.abs(startLocation.lng() - currentLocation.lng());
+            let distA = (xa * xa) + (ya * ya);
+
+            // Generate next stops
+            if (distA < 1) {
+                dist += radius;
+                pointsWithinMetres(dist, currentLocation, selectNextDest);
+            }
+
+
+            // }
+
+        })
+    } else {
+        return;
+        //     // Remove the current location so it goes back and tries again with the prev location
+        //     locationList.splice(-1, 1);
+        //     currentLocation = locationList[locationList.length - 1];
+        // }
+
+        // if past the halfway point, start heading back
+        // getDistance(currentLocation, startLocation, function(result) {
+        //         dist = result;
+        //
+        //
+        //         if (nextStopOptions.length < 2) {
+        //             pointsWithinMetres(dist, currentLocation, selectNextDest(nextStopOptions));
+        //         }
+        //     }
+    }
 }
