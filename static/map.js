@@ -128,7 +128,7 @@ startRouting = function() {
 
             // console.log(value);
 
-            generatePath(new google.maps.LatLng(pos.lat, pos.lng), value.value * 1000, 200);
+            generatePath(new google.maps.LatLng(pos.lat, pos.lng), value.value * 1000, value.value * 100);
 
         }, function() {
             handleLocationError(true, infoWindow, map.getCenter());

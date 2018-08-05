@@ -14,7 +14,7 @@
 
             <form onsubmit="return startRouting();">
                 <label for="totalDistance">Total Distance (km):</label>
-                <input type="number" id="totalDistance" autofocus value="10" onfocus="var temp_value=this.value; this.value=''; this.value=temp_value">
+                <input type="number" id="totalDistance" autofocus value="2" onfocus="var temp_value=this.value; this.value=''; this.value=temp_value">
                 <input type="submit" id="distanceButton" value="Submit">
                 <img src="{{ url_for('static', filename='share.png') }}" id="share">
             </form>
