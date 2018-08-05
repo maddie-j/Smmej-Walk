@@ -37,12 +37,22 @@ form {
 #head {
 	border-bottom: solid 1px black;
     border-top: solid 1px #90A959;
+    height: 50px;
 }
 
 #logo {
-	display: block;
+	display: inline-block;
 	width: 30px;
 /*	padding: 4px;*/
+}
+
+#share {
+	float: right;
+	height: 40px;
+}
+
+#share:hover {
+	background-color: #ddd;
 }
 
 
