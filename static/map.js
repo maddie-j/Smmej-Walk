@@ -107,35 +107,39 @@ function generatePathBackup(startLocation, distance, radius) {
 }
 
 
-document.onload = function() {
-    var value = document.getElementById("distanceButton");
+startRouting = function() {
+    console.log("Stuff and things!");
+    var value = document.getElementById("totalDistance");
 
-    value.addEventListener("click", function(e) {
-        e.preventDefault();
-        // Try HTML5 geolocation.
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(function(position) {
-                var pos = {
-                    lat: position.coords.latitude,
-                    lng: position.coords.longitude
-                };
+    // e.preventDefault();
+    // Try HTML5 geolocation.
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+            var pos = {
+                lat: position.coords.latitude,
+                lng: position.coords.longitude
+            };
 
-                infoWindow.setPosition(pos);
-                infoWindow.setContent('You are currently here.');
-                infoWindow.open(map);
-                map.setCenter(pos);
 
-                generatePath(position, value.val(), 100);
+            infoWindow.setPosition(pos);
+            infoWindow.setContent('You are currently here.');
+            infoWindow.open(map);
+            map.setCenter(pos);
 
-            }, function() {
-                handleLocationError(true, infoWindow, map.getCenter());
+            // console.log(value);
 
-            });
-        } else {
-            // Browser doesn't support Geolocation
-            handleLocationError(false, infoWindow, map.getCenter());
-        }
-    });
+            generatePath(new google.maps.LatLng(pos.lat, pos.lng), value.value * 1000, 200);
+
+        }, function() {
+            handleLocationError(true, infoWindow, map.getCenter());
+
+        });
+    } else {
+        // Browser doesn't support Geolocation
+        handleLocationError(false, infoWindow, map.getCenter());
+    }
+
+    return false;
 }
 
 function linkPositions() {
@@ -152,7 +156,7 @@ function linkPositions() {
             "location": x,
             "stopover": true
         })),
-        optimizeWaypoints: false,
+        optimizeWaypoints: true,
         travelMode: 'WALKING',
 
     }, function(response, status) {
@@ -192,14 +196,8 @@ function generatePath(start, distance, rad) {
     visitedLocations = [];
 
 
-    // Wandering between locations
-    // while (true) {
-    let dist = 0;
-    let nextStopOptions = [];
-
     // Generate next stops
-    dist += radius;
-    pointsWithinMetres(dist, currentLocation, selectNextDest);
+    pointsWithinMetres(radius, currentLocation, selectNextDest);
 
     // while (true) {}
     // }
@@ -213,9 +211,8 @@ selectNextDest = function(nextStopOptions) {
     });
     // Test the above:
     // console.log(nextStopOptions);
-    let dist = 0;
 
-    if (journey + dist > distMin) {
+    if (journey + radius > distMin) {
         nextStopOptions = nextStopOptions.filter(function(loc) {
             if (closerToStartThanNow(currentLocation, loc, startLocation)) {
                 return loc;
@@ -239,6 +236,7 @@ selectNextDest = function(nextStopOptions) {
             // } else {
             // Add the location and move on
             journey += addedDist;
+            console.log("Distance is " + journey);
             currentLocation = newLocation;
 
             let marker = new google.maps.Marker({
@@ -251,21 +249,25 @@ selectNextDest = function(nextStopOptions) {
             visitedLocations.push(currentLocation);
 
 
-            let xa = Math.abs(startLocation.lat() - currentLocation.lat());
-            let ya = Math.abs(startLocation.lng() - currentLocation.lng());
-            let distA = (xa * xa) + (ya * ya);
+            // let xa = Math.abs(startLocation.lat() - currentLocation.lat());
+            // let ya = Math.abs(startLocation.lng() - currentLocation.lng());
+            // let distA = (xa * xa) + (ya * ya);
 
             // Generate next stops
-            if (distA < 1) {
-                dist += radius;
-                pointsWithinMetres(dist, currentLocation, selectNextDest);
-            }
+            // if (distA < 10) {
+            // if (distA < 10) {
+                // dist += radius;
+                pointsWithinMetres(radius, currentLocation, selectNextDest);
+            // } else {
+
+            // }
 
 
             // }
 
         })
     } else {
+        linkPositions();
         return;
         //     // Remove the current location so it goes back and tries again with the prev location
         //     locationList.splice(-1, 1);
