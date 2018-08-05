@@ -71,17 +71,20 @@ form {
 
 
 
-/*
+
 @media screen and (max-width: 500px) {
-  .header a {
-    float: none;
-    display: block;
-    text-align: left;
-  }
-  .header-right {
-    float: none;
-  }
-}*/
+	#map {
+		margin-top: 16px;
+		height: calc(100% - 50px);
+	}
+	#head {
+		height: 50px;
+
+	}
+	#share {
+		display: none;
+	}
+}
 
 input[type=number] {
 	font-size: 18px;
